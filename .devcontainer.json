@@ -1,0 +1,7 @@
+{
+  "name": "deepseek-pi",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/nix:1": {}
+  }
+}
