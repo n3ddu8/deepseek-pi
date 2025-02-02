@@ -1,0 +1,44 @@
+---
+- name: Install Docker
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update package list and upgrade system
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Ensure dependencies
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Download and run install script
+      shell: |
+        curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Check if user is already in the Docker group
+      command: id -Gn {{ ansible_user_id }}
+      register: user_groups
+      changed_when: false
+
+    - name: Add user to Docker group if not already a member
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+      when: "'docker' not in user_groups.stdout"
+      register: usermod_changed
+
+    - name: Apply group changes
+      shell: newgrp docker
+      when: usermod_changed.changed
+      become_user: "{{ ansible_user_id }}"
+
