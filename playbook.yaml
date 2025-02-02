@@ -1,0 +1,64 @@
+---
+- name: Install Docker
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update package list and upgrade system
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Ensure dependencies
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Download and run install script
+      shell: |
+        curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Check if user is already in the Docker group
+      command: id -Gn {{ ansible_user_id }}
+      register: user_groups
+      changed_when: false
+
+    - name: Add user to Docker group if not already a member
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+      when: "'docker' not in user_groups.stdout"
+      register: usermod_changed
+
+    - name: Apply group changes
+      shell: newgrp docker
+      when: usermod_changed.changed
+      become_user: "{{ ansible_user_id }}"
+
+    - name: Create directory for Docker Compose files
+      file:
+        path: /opt/docker-compose
+        state: directory
+        owner: "{{ ansible_user_id }}"
+        group: docker
+        mode: "0755"
+
+    - name: Copy docker-compose.yaml to target machine
+      copy:
+        src: ./docker-compose.yaml  # Path on the Ansible control machine
+        dest: /opt/docker-compose/docker-compose.yaml
+        owner: "{{ ansible_user_id }}"
+        group: docker
+        mode: "0644"
+
+    - name: Start Docker Compose services
+      shell: docker compose up -d
+      args:
+        chdir: /opt/docker-compose

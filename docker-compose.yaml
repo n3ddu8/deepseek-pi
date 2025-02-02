@@ -1,0 +1,35 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    volumes:
+      - ./data:/app/backend/data
+    ports:
+      - 3000:8080
+    depends_on:
+      - ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - 11434:11434
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_NICE
+    mem_limit: 8g
+    memswap_limit: 8g
+    cpus: "4"
+    read_only: true
+    restart: unless-stopped
+
+volumes:
+  ollama:

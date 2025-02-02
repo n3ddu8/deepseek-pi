@@ -1,0 +1,7 @@
+all:
+  hosts:
+    pigamma:
+      ansible_host: ${{ secrets.PIGAMMA_HOST }}
+      ansible_user: piadmin
+      ansible_become: true
+      ansible_become_password: ${{ secrets.PIALPHA_PIGAMMA_PASSWORD }}
