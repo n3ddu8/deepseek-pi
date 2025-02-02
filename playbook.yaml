@@ -42,3 +42,23 @@
       when: usermod_changed.changed
       become_user: "{{ ansible_user_id }}"
 
+    - name: Create directory for Docker Compose files
+      file:
+        path: /opt/docker-compose
+        state: directory
+        owner: "{{ ansible_user_id }}"
+        group: docker
+        mode: "0755"
+
+    - name: Copy docker-compose.yaml to target machine
+      copy:
+        src: ./docker-compose.yaml  # Path on the Ansible control machine
+        dest: /opt/docker-compose/docker-compose.yaml
+        owner: "{{ ansible_user_id }}"
+        group: docker
+        mode: "0644"
+
+    - name: Start Docker Compose services
+      shell: docker compose up -d
+      args:
+        chdir: /opt/docker-compose
